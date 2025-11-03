@@ -1,4 +1,4 @@
-import {forwardRef, memo, useContext, useMemo} from 'react'
+import {memo, useContext, useMemo} from 'react'
 import {
   ScrollView,
   type ScrollViewProps,
@@ -57,51 +57,48 @@ export const Screen = memo(function Screen({
 })
 
 export type ContentProps = ScrollViewProps & {
+  ref?: React.Ref<ScrollView>
   ignoreTabletLayoutOffset?: boolean
 }
 
 /**
  * Default scroll view for simple pages
  */
-export const Content = memo(
-  forwardRef<ScrollView, ContentProps>(function Content(
-    {
-      children,
-      style,
-      contentContainerStyle,
-      ignoreTabletLayoutOffset,
-      ...props
-    },
-    ref,
-  ) {
-    const t = useTheme()
-    const {footerHeight} = useShellLayout()
+export const Content = memo(function Content({
+  ref,
+  children,
+  style,
+  contentContainerStyle,
+  ignoreTabletLayoutOffset,
+  ...props
+}: ContentProps) {
+  const t = useTheme()
+  const {footerHeight} = useShellLayout()
 
-    return (
-      <ScrollView
-        ref={ref}
-        id="content"
-        automaticallyAdjustsScrollIndicatorInsets={false}
-        scrollIndicatorInsets={{bottom: footerHeight, top: 0, right: 1}}
-        indicatorStyle={t.scheme === 'dark' ? 'white' : 'black'}
-        style={[scrollViewStyles.common, style]}
-        contentInset={ios({top: 0, left: 0, bottom: footerHeight, right: 0})}
-        contentContainerStyle={[
-          !isIOS && {paddingBottom: footerHeight},
-          contentContainerStyle,
-        ]}
-        {...props}>
-        {isWeb ? (
-          <Center ignoreTabletLayoutOffset={ignoreTabletLayoutOffset}>
-            {children}
-          </Center>
-        ) : (
-          children
-        )}
-      </ScrollView>
-    )
-  }),
-)
+  return (
+    <ScrollView
+      ref={ref}
+      id="content"
+      automaticallyAdjustsScrollIndicatorInsets={false}
+      scrollIndicatorInsets={{bottom: footerHeight, top: 0, right: 1}}
+      indicatorStyle={t.scheme === 'dark' ? 'white' : 'black'}
+      style={[scrollViewStyles.common, style]}
+      contentInset={ios({top: 0, left: 0, bottom: footerHeight, right: 0})}
+      contentContainerStyle={[
+        !isIOS && {paddingBottom: footerHeight},
+        contentContainerStyle,
+      ]}
+      {...props}>
+      {isWeb ? (
+        <Center ignoreTabletLayoutOffset={ignoreTabletLayoutOffset}>
+          {children}
+        </Center>
+      ) : (
+        children
+      )}
+    </ScrollView>
+  )
+})
 
 const scrollViewStyles = StyleSheet.create({
   common: {
