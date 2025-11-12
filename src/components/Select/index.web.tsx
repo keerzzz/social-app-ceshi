@@ -1,4 +1,10 @@
-import {createContext, forwardRef, useContext, useMemo} from 'react'
+import {
+  createContext,
+  type CSSProperties,
+  forwardRef,
+  useContext,
+  useMemo,
+} from 'react'
 import {View} from 'react-native'
 import {Select as RadixSelect} from 'radix-ui'
 
@@ -16,6 +22,7 @@ import {
   type IconProps,
   type ItemIndicatorProps,
   type ItemProps,
+  type ItemTextProps,
   type RadixPassThroughTriggerProps,
   type RootProps,
   type TriggerProps,
@@ -268,7 +275,13 @@ export function Item({ref, value, style, children}: ItemProps) {
   )
 }
 
-export const ItemText = RadixSelect.ItemText
+export const ItemText = function ItemText({children, style}: ItemTextProps) {
+  return (
+    <RadixSelect.ItemText style={flatten(style) as CSSProperties}>
+      {children}
+    </RadixSelect.ItemText>
+  )
+}
 
 export function ItemIndicator({icon: Icon = CheckIcon}: ItemIndicatorProps) {
   return (
@@ -282,5 +295,22 @@ export function ItemIndicator({icon: Icon = CheckIcon}: ItemIndicatorProps) {
       ])}>
       <Icon size="sm" />
     </RadixSelect.ItemIndicator>
+  )
+}
+
+export function Separator() {
+  const t = useTheme()
+
+  return (
+    <RadixSelect.Separator
+      style={flatten([
+        {
+          height: 1,
+          backgroundColor: t.atoms.border_contrast_low.borderColor,
+        },
+        a.my_xs,
+        a.w_full,
+      ])}
+    />
   )
 }
