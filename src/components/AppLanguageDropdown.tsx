@@ -65,6 +65,7 @@ export function AppLanguageDropdown() {
         )}
       </Select.Trigger>
       <Select.Content
+        label={_(msg`Select language`)}
         renderItem={({label, value}) => (
           <Select.Item value={value} label={label}>
             <Select.ItemIndicator />
