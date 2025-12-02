@@ -25,9 +25,7 @@ import {useUnreadMessageCount} from '#/state/queries/messages/list-conversations
 import {useUnreadNotifications} from '#/state/queries/notifications/unread'
 import {useProfileQuery} from '#/state/queries/profile'
 import {useSession} from '#/state/session'
-import {useLoggedOutViewControls} from '#/state/shell/logged-out'
 import {useShellLayout} from '#/state/shell/shell-layout'
-import {useCloseAllActiveElements} from '#/state/util'
 import {UserAvatar} from '#/view/com/util/UserAvatar'
 import {Logo} from '#/view/icons/Logo'
 import {Logotype} from '#/view/icons/Logotype'
@@ -67,8 +65,6 @@ export function BottomBar({navigation}: BottomTabBarProps) {
   const numUnreadMessages = useUnreadMessageCount()
   const footerMinimalShellTransform = useMinimalShellFooterTransform()
   const {data: profile} = useProfileQuery({did: currentAccount?.did})
-  const {requestSwitchToAccount} = useLoggedOutViewControls()
-  const closeAllActiveElements = useCloseAllActiveElements()
   const dedupe = useDedupe()
   const accountSwitchControl = useDialogControl()
   const playHaptic = useHaptics()
@@ -76,17 +72,6 @@ export function BottomBar({navigation}: BottomTabBarProps) {
   const gate = useGate()
   const hideBorder = useHideBottomBarBorder()
   const iconWidth = 28
-
-  const showSignIn = useCallback(() => {
-    closeAllActiveElements()
-    requestSwitchToAccount({requestedAccount: 'none'})
-  }, [requestSwitchToAccount, closeAllActiveElements])
-
-  const showCreateAccount = useCallback(() => {
-    closeAllActiveElements()
-    requestSwitchToAccount({requestedAccount: 'new'})
-    // setShowLoggedOut(true)
-  }, [requestSwitchToAccount, closeAllActiveElements])
 
   const onPressTab = useCallback(
     (tab: TabOptions) => {
@@ -337,29 +322,6 @@ export function BottomBar({navigation}: BottomTabBarProps) {
                 <View style={{paddingTop: 4}}>
                   <Logotype width={80} fill={pal.text.color} />
                 </View>
-              </View>
-
-              <View style={[a.flex_row, a.flex_wrap, a.gap_sm]}>
-                <Button
-                  onPress={showCreateAccount}
-                  label={_(msg`Create account`)}
-                  size="small"
-                  variant="solid"
-                  color="primary">
-                  <ButtonText>
-                    <Trans>Create account</Trans>
-                  </ButtonText>
-                </Button>
-                <Button
-                  onPress={showSignIn}
-                  label={_(msg`Sign in`)}
-                  size="small"
-                  variant="solid"
-                  color="secondary">
-                  <ButtonText>
-                    <Trans>Sign in</Trans>
-                  </ButtonText>
-                </Button>
               </View>
             </View>
           </>
