@@ -185,8 +185,6 @@ export const LoginForm = ({
         </TextField.LabelText>
         <HostingProvider
           serviceUrl={serviceUrl}
-          onSelectServiceUrl={setServiceUrl}
-          onOpenDialog={onPressSelectService}
         />
       </View>
       <View>

@@ -150,7 +150,6 @@ let DrawerContent = ({}: React.PropsWithoutRef<{}>): React.ReactNode => {
   const {
     isAtHome,
     isAtSearch,
-    isAtFeeds,
     isAtBookmarks,
     isAtNotifications,
     isAtMyProfile,
@@ -223,11 +222,6 @@ let DrawerContent = ({}: React.PropsWithoutRef<{}>): React.ReactNode => {
     onPressTab('MyProfile')
   }, [onPressTab])
 
-  const onPressMyFeeds = React.useCallback(() => {
-    navigation.navigate('Feeds')
-    setDrawerOpen(false)
-  }, [navigation, setDrawerOpen])
-
   const onPressLists = React.useCallback(() => {
     navigation.navigate('Lists')
     setDrawerOpen(false)
@@ -297,7 +291,6 @@ let DrawerContent = ({}: React.PropsWithoutRef<{}>): React.ReactNode => {
               isActive={isAtNotifications}
               onPress={onPressNotifications}
             />
-            <FeedsMenuItem isActive={isAtFeeds} onPress={onPressMyFeeds} />
             <ListsMenuItem onPress={onPressLists} />
             <BookmarksMenuItem
               isActive={isAtBookmarks}
@@ -312,7 +305,6 @@ let DrawerContent = ({}: React.PropsWithoutRef<{}>): React.ReactNode => {
         ) : (
           <>
             <HomeMenuItem isActive={isAtHome} onPress={onPressHome} />
-            <FeedsMenuItem isActive={isAtFeeds} onPress={onPressMyFeeds} />
             <SearchMenuItem isActive={isAtSearch} onPress={onPressSearch} />
           </>
         )}
@@ -509,31 +501,6 @@ let NotificationsMenuItem = ({
 }
 NotificationsMenuItem = React.memo(NotificationsMenuItem)
 
-let FeedsMenuItem = ({
-  isActive,
-  onPress,
-}: {
-  isActive: boolean
-  onPress: () => void
-}): React.ReactNode => {
-  const {_} = useLingui()
-  const t = useTheme()
-  return (
-    <MenuItem
-      icon={
-        isActive ? (
-          <HashtagFilled width={iconWidth} style={[t.atoms.text]} />
-        ) : (
-          <Hashtag width={iconWidth} style={[t.atoms.text]} />
-        )
-      }
-      label={_(msg`Feeds`)}
-      bold={isActive}
-      onPress={onPress}
-    />
-  )
-}
-FeedsMenuItem = React.memo(FeedsMenuItem)
 
 let ListsMenuItem = ({onPress}: {onPress: () => void}): React.ReactNode => {
   const {_} = useLingui()
