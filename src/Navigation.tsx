@@ -99,7 +99,6 @@ import {AccountSettingsScreen} from '#/screens/Settings/AccountSettings'
 import {ActivityPrivacySettingsScreen} from '#/screens/Settings/ActivityPrivacySettings'
 import {AppearanceSettingsScreen} from '#/screens/Settings/AppearanceSettings'
 import {AppIconSettingsScreen} from '#/screens/Settings/AppIconSettings'
-import {AppPasswordsScreen} from '#/screens/Settings/AppPasswords'
 import {ContentAndMediaSettingsScreen} from '#/screens/Settings/ContentAndMediaSettings'
 import {ExternalMediaPreferencesScreen} from '#/screens/Settings/ExternalMediaPreferences'
 import {FollowingFeedPreferencesScreen} from '#/screens/Settings/FollowingFeedPreferences'
@@ -344,11 +343,6 @@ function commonScreens(Stack: typeof Flat, unreadCountLabel?: string) {
         name="CopyrightPolicy"
         getComponent={() => CopyrightPolicyScreen}
         options={{title: title(msg`Copyright Policy`)}}
-      />
-      <Stack.Screen
-        name="AppPasswords"
-        getComponent={() => AppPasswordsScreen}
-        options={{title: title(msg`App Passwords`), requireAuth: true}}
       />
       <Stack.Screen
         name="SavedFeeds"

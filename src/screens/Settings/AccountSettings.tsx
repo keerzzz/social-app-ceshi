@@ -27,7 +27,6 @@ import * as Layout from '#/components/Layout'
 import {ChangeHandleDialog} from './components/ChangeHandleDialog'
 import {ChangePasswordDialog} from './components/ChangePasswordDialog'
 import {DeactivateAccountDialog} from './components/DeactivateAccountDialog'
-import {ExportCarDialog} from './components/ExportCarDialog'
 
 type Props = NativeStackScreenProps<CommonNavigatorParams, 'AccountSettings'>
 export function AccountSettingsScreen({}: Props) {
@@ -39,7 +38,6 @@ export function AccountSettingsScreen({}: Props) {
   const birthdayControl = useDialogControl()
   const changeHandleControl = useDialogControl()
   const changePasswordControl = useDialogControl()
-  const exportCarControl = useDialogControl()
   const deactivateAccountControl = useDialogControl()
 
   return (
@@ -149,15 +147,6 @@ export function AccountSettingsScreen({}: Props) {
           <AgeAssuranceAccountCard style={[a.px_xl, a.pt_xs, a.pb_md]} />
           <SettingsList.Divider />
           <SettingsList.PressableItem
-            label={_(msg`Export my data`)}
-            onPress={() => exportCarControl.open()}>
-            <SettingsList.ItemIcon icon={CarIcon} />
-            <SettingsList.ItemText>
-              <Trans>Export my data</Trans>
-            </SettingsList.ItemText>
-            <SettingsList.Chevron />
-          </SettingsList.PressableItem>
-          <SettingsList.PressableItem
             label={_(msg`Deactivate account`)}
             onPress={() => deactivateAccountControl.open()}
             destructive>
@@ -183,7 +172,6 @@ export function AccountSettingsScreen({}: Props) {
       <BirthDateSettingsDialog control={birthdayControl} />
       <ChangeHandleDialog control={changeHandleControl} />
       <ChangePasswordDialog control={changePasswordControl} />
-      <ExportCarDialog control={exportCarControl} />
       <DeactivateAccountDialog control={deactivateAccountControl} />
     </Layout.Screen>
   )

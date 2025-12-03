@@ -28,8 +28,6 @@ import {useProfileQuery, useProfilesQuery} from '#/state/queries/profile'
 import {useAgent} from '#/state/session'
 import {type SessionAccount, useSession, useSessionApi} from '#/state/session'
 import {useOnboardingDispatch} from '#/state/shell'
-import {useLoggedOutViewControls} from '#/state/shell/logged-out'
-import {useCloseAllActiveElements} from '#/state/util'
 import * as Toast from '#/view/com/util/Toast'
 import {UserAvatar} from '#/view/com/util/UserAvatar'
 import * as SettingsList from '#/screens/Settings/components/SettingsList'
@@ -552,18 +550,13 @@ function DevOptions() {
 
 function AddAccountRow() {
   const {_} = useLingui()
-  const {setShowLoggedOut} = useLoggedOutViewControls()
-  const closeEverything = useCloseAllActiveElements()
-
-  const onAddAnotherAccount = () => {
-    setShowLoggedOut(true)
-    closeEverything()
-  }
 
   return (
     <SettingsList.PressableItem
-      onPress={onAddAnotherAccount}
-      label={_(msg`Add another account`)}>
+      onPress={() => {}}
+      label={_(msg`Add another account`)}
+      disabled
+    >
       <SettingsList.ItemIcon icon={PersonPlusIcon} />
       <SettingsList.ItemText>
         <Trans>Add another account</Trans>

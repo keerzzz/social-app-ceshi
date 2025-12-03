@@ -68,10 +68,6 @@ function ChangeHandleDialogInner() {
     refetch,
   } = useServiceQuery(agent.serviceUrl.toString())
 
-  const [page, setPage] = useState<'provided-handle' | 'own-handle'>(
-    'provided-handle',
-  )
-
   const cancelButton = useCallback(
     () => (
       <Button
@@ -109,28 +105,9 @@ function ChangeHandleDialogInner() {
             onPressTryAgain={refetch}
           />
         ) : serviceInfo ? (
-          <LayoutAnimationConfig skipEntering skipExiting>
-            {page === 'provided-handle' ? (
-              <Animated.View
-                key={page}
-                entering={native(SlideInLeft)}
-                exiting={native(SlideOutLeft)}>
-                <ProvidedHandlePage
-                  serviceInfo={serviceInfo}
-                  goToOwnHandle={() => setPage('own-handle')}
-                />
-              </Animated.View>
-            ) : (
-              <Animated.View
-                key={page}
-                entering={native(SlideInRight)}
-                exiting={native(SlideOutRight)}>
-                <OwnHandlePage
-                  goToServiceHandle={() => setPage('provided-handle')}
-                />
-              </Animated.View>
-            )}
-          </LayoutAnimationConfig>
+          <ProvidedHandlePage
+            serviceInfo={serviceInfo}
+          />
         ) : (
           <View style={[a.flex_1, a.justify_center, a.align_center, a.py_4xl]}>
             <Loader size="xl" />
@@ -143,10 +120,8 @@ function ChangeHandleDialogInner() {
 
 function ProvidedHandlePage({
   serviceInfo,
-  goToOwnHandle,
 }: {
   serviceInfo: ComAtprotoServerDescribeServer.OutputSchema
-  goToOwnHandle: () => void
 }) {
   const {_} = useLingui()
   const [subdomain, setSubdomain] = useState('')
@@ -268,334 +243,12 @@ function ProvidedHandlePage({
               </ButtonText>
             )}
           </Button>
-          <Text style={[a.leading_snug]}>
-            <Trans>
-              If you have your own domain, you can use that as your handle. This
-              lets you self-verify your identity.{' '}
-              <InlineLinkText
-                label={_(
-                  msg({
-                    message: `Learn more`,
-                    context: `english-only-resource`,
-                  }),
-                )}
-                to="https://bsky.social/about/blog/4-28-2023-domain-handle-tutorial"
-                style={[a.font_semi_bold]}
-                disableMismatchWarning>
-                Learn more here.
-              </InlineLinkText>
-            </Trans>
-          </Text>
-          <Button
-            label={_(msg`I have my own domain`)}
-            variant="outline"
-            color="primary"
-            size="large"
-            onPress={goToOwnHandle}>
-            <ButtonText>
-              <Trans>I have my own domain</Trans>
-            </ButtonText>
-            <ButtonIcon icon={ArrowRightIcon} position="right" />
-          </Button>
         </Animated.View>
       </View>
     </LayoutAnimationConfig>
   )
 }
 
-function OwnHandlePage({goToServiceHandle}: {goToServiceHandle: () => void}) {
-  const {_} = useLingui()
-  const t = useTheme()
-  const {currentAccount} = useSession()
-  const [dnsPanel, setDNSPanel] = useState(true)
-  const [domain, setDomain] = useState('')
-  const agent = useAgent()
-  const control = Dialog.useDialogContext()
-  const fetchDid = useFetchDid()
-  const queryClient = useQueryClient()
-
-  const {
-    mutate: changeHandle,
-    isPending,
-    error,
-    isSuccess,
-  } = useUpdateHandleMutation({
-    onSuccess: () => {
-      if (currentAccount) {
-        queryClient.invalidateQueries({
-          queryKey: RQKEY_PROFILE(currentAccount.did),
-        })
-      }
-      agent.resumeSession(agent.session!).then(() => control.close())
-    },
-  })
-
-  const {
-    mutate: verify,
-    isPending: isVerifyPending,
-    isSuccess: isVerified,
-    error: verifyError,
-    reset: resetVerification,
-  } = useMutation<true, Error | DidMismatchError>({
-    mutationKey: ['verify-handle', domain],
-    mutationFn: async () => {
-      const did = await fetchDid(domain)
-      if (did !== currentAccount?.did) {
-        throw new DidMismatchError(did)
-      }
-      return true
-    },
-  })
-
-  return (
-    <View style={[a.flex_1, a.gap_lg]}>
-      {isSuccess && (
-        <Animated.View entering={FadeIn} exiting={FadeOut}>
-          <SuccessMessage text={_(msg`Handle changed!`)} />
-        </Animated.View>
-      )}
-      {error && (
-        <Animated.View entering={FadeIn} exiting={FadeOut}>
-          <ChangeHandleError error={error} />
-        </Animated.View>
-      )}
-      {verifyError && (
-        <Animated.View entering={FadeIn} exiting={FadeOut}>
-          <Admonition type="error">
-            {verifyError instanceof DidMismatchError ? (
-              <Trans>
-                Wrong DID returned from server. Received: {verifyError.did}
-              </Trans>
-            ) : (
-              <Trans>Failed to verify handle. Please try again.</Trans>
-            )}
-          </Admonition>
-        </Animated.View>
-      )}
-      <Animated.View
-        layout={native(LinearTransition)}
-        style={[a.flex_1, a.gap_md, a.overflow_hidden]}>
-        <View>
-          <TextField.LabelText>
-            <Trans>Enter the domain you want to use</Trans>
-          </TextField.LabelText>
-          <TextField.Root>
-            <TextField.Icon icon={AtIcon} />
-            <Dialog.Input
-              label={_(msg`New handle`)}
-              placeholder={_(msg`e.g. alice.com`)}
-              editable={!isPending}
-              defaultValue={domain}
-              onChangeText={text => {
-                setDomain(text)
-                resetVerification()
-              }}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </TextField.Root>
-        </View>
-        <SegmentedControl.Root
-          label={_(msg`Choose domain verification method`)}
-          type="tabs"
-          value={dnsPanel ? 'dns' : 'file'}
-          onChange={values => setDNSPanel(values === 'dns')}>
-          <SegmentedControl.Item value="dns" label={_(msg`DNS Panel`)}>
-            <SegmentedControl.ItemText>
-              <Trans>DNS Panel</Trans>
-            </SegmentedControl.ItemText>
-          </SegmentedControl.Item>
-          <SegmentedControl.Item value="file" label={_(msg`No DNS Panel`)}>
-            <SegmentedControl.ItemText>
-              <Trans>No DNS Panel</Trans>
-            </SegmentedControl.ItemText>
-          </SegmentedControl.Item>
-        </SegmentedControl.Root>
-        {dnsPanel ? (
-          <>
-            <Text>
-              <Trans>Add the following DNS record to your domain:</Trans>
-            </Text>
-            <View
-              style={[
-                t.atoms.bg_contrast_25,
-                a.rounded_sm,
-                a.p_md,
-                a.border,
-                t.atoms.border_contrast_low,
-              ]}>
-              <Text style={[t.atoms.text_contrast_medium]}>
-                <Trans>Host:</Trans>
-              </Text>
-              <View style={[a.py_xs]}>
-                <CopyButton
-                  color="secondary"
-                  value="_atproto"
-                  label={_(msg`Copy host`)}
-                  style={[a.bg_transparent]}
-                  hoverStyle={[a.bg_transparent]}
-                  hitSlop={HITSLOP_10}>
-                  <Text style={[a.text_md, a.flex_1]}>_atproto</Text>
-                  <ButtonIcon icon={CopyIcon} />
-                </CopyButton>
-              </View>
-              <Text style={[a.mt_xs, t.atoms.text_contrast_medium]}>
-                <Trans>Type:</Trans>
-              </Text>
-              <View style={[a.py_xs]}>
-                <Text style={[a.text_md]}>TXT</Text>
-              </View>
-              <Text style={[a.mt_xs, t.atoms.text_contrast_medium]}>
-                <Trans>Value:</Trans>
-              </Text>
-              <View style={[a.py_xs]}>
-                <CopyButton
-                  color="secondary"
-                  value={'did=' + currentAccount?.did}
-                  label={_(msg`Copy TXT record value`)}
-                  style={[a.bg_transparent]}
-                  hoverStyle={[a.bg_transparent]}
-                  hitSlop={HITSLOP_10}>
-                  <Text style={[a.text_md, a.flex_1]}>
-                    did={currentAccount?.did}
-                  </Text>
-                  <ButtonIcon icon={CopyIcon} />
-                </CopyButton>
-              </View>
-            </View>
-            <Text>
-              <Trans>This should create a domain record at:</Trans>
-            </Text>
-            <View
-              style={[
-                t.atoms.bg_contrast_25,
-                a.rounded_sm,
-                a.p_md,
-                a.border,
-                t.atoms.border_contrast_low,
-              ]}>
-              <Text style={[a.text_md]}>_atproto.{domain}</Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <Text>
-              <Trans>Upload a text file to:</Trans>
-            </Text>
-            <View
-              style={[
-                t.atoms.bg_contrast_25,
-                a.rounded_sm,
-                a.p_md,
-                a.border,
-                t.atoms.border_contrast_low,
-              ]}>
-              <Text style={[a.text_md]}>
-                https://{domain}/.well-known/atproto-did
-              </Text>
-            </View>
-            <Text>
-              <Trans>That contains the following:</Trans>
-            </Text>
-            <CopyButton
-              value={currentAccount?.did ?? ''}
-              label={_(msg`Copy DID`)}
-              size="large"
-              shape="rectangular"
-              color="secondary"
-              style={[
-                a.px_md,
-                a.border,
-                t.atoms.border_contrast_low,
-                t.atoms.bg_contrast_25,
-              ]}>
-              <Text style={[a.text_md, a.flex_1]}>{currentAccount?.did}</Text>
-              <ButtonIcon icon={CopyIcon} />
-            </CopyButton>
-          </>
-        )}
-      </Animated.View>
-      {isVerified && (
-        <Animated.View
-          entering={FadeIn}
-          exiting={FadeOut}
-          layout={native(LinearTransition)}>
-          <SuccessMessage text={_(msg`Domain verified!`)} />
-        </Animated.View>
-      )}
-      <Animated.View layout={native(LinearTransition)}>
-        {currentAccount?.handle?.endsWith('.bsky.social') && (
-          <Admonition type="info" style={[a.mb_md]}>
-            <Trans>
-              Your current handle{' '}
-              <Text style={[a.font_semi_bold]}>
-                {sanitizeHandle(currentAccount?.handle || '', '@')}
-              </Text>{' '}
-              will automatically remain reserved for you. You can switch back to
-              it at any time from this account.
-            </Trans>
-          </Admonition>
-        )}
-        <Button
-          label={
-            isVerified
-              ? _(msg`Update to ${domain}`)
-              : dnsPanel
-                ? _(msg`Verify DNS Record`)
-                : _(msg`Verify Text File`)
-          }
-          variant="solid"
-          size="large"
-          color="primary"
-          disabled={domain.trim().length === 0}
-          onPress={() => {
-            if (isVerified) {
-              changeHandle({handle: domain})
-            } else {
-              verify()
-            }
-          }}>
-          {isPending || isVerifyPending ? (
-            <ButtonIcon icon={Loader} />
-          ) : (
-            <ButtonText>
-              {isVerified ? (
-                <Trans>Update to {domain}</Trans>
-              ) : dnsPanel ? (
-                <Trans>Verify DNS Record</Trans>
-              ) : (
-                <Trans>Verify Text File</Trans>
-              )}
-            </ButtonText>
-          )}
-        </Button>
-
-        <Button
-          label={_(msg`Use default provider`)}
-          accessibilityHint={_(msg`Returns to previous page`)}
-          onPress={goToServiceHandle}
-          variant="outline"
-          color="secondary"
-          size="large"
-          style={[a.mt_sm]}>
-          <ButtonIcon icon={ArrowLeftIcon} position="left" />
-          <ButtonText>
-            <Trans>Nevermind, create a handle for me</Trans>
-          </ButtonText>
-        </Button>
-      </Animated.View>
-    </View>
-  )
-}
-
-class DidMismatchError extends Error {
-  did: string
-  constructor(did: string) {
-    super('DID mismatch')
-    this.name = 'DidMismatchError'
-    this.did = did
-  }
-}
 
 function ChangeHandleError({error}: {error: unknown}) {
   const {_} = useLingui()
