@@ -28,13 +28,11 @@ import {colors, s} from '#/lib/styles'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
 import {listenSoftReset} from '#/state/events'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
-import {useLabelerInfoQuery} from '#/state/queries/labeler'
 import {resetProfilePostsQueries} from '#/state/queries/post-feed'
 import {useProfileQuery} from '#/state/queries/profile'
 import {useResolveDidQuery} from '#/state/queries/resolve-uri'
 import {useAgent, useSession} from '#/state/session'
 import {useSetMinimalShellMode} from '#/state/shell'
-import {ProfileFeedgens} from '#/view/com/feeds/ProfileFeedgens'
 import {ProfileLists} from '#/view/com/lists/ProfileLists'
 import {PagerWithHeader} from '#/view/com/pager/PagerWithHeader'
 import {ErrorScreen} from '#/view/com/util/error/ErrorScreen'
@@ -42,7 +40,6 @@ import {FAB} from '#/view/com/util/fab/FAB'
 import {type ListRef} from '#/view/com/util/List'
 import {ProfileHeader, ProfileHeaderLoading} from '#/screens/Profile/Header'
 import {ProfileFeedSection} from '#/screens/Profile/Sections/Feed'
-import {ProfileLabelsSection} from '#/screens/Profile/Sections/Labels'
 import {atoms as a} from '#/alf'
 import {Circle_And_Square_Stroke1_Corner0_Rounded_Filled as CircleAndSquareIcon} from '#/components/icons/CircleAndSquare'
 import {Heart2_Stroke1_Corner0_Rounded as HeartIcon} from '#/components/icons/Heart2'
@@ -178,14 +175,6 @@ function ProfileScreenLoaded({
   const {openComposer} = useOpenComposer()
   const navigation = useNavigation<NavigationProp>()
   const requireEmailVerification = useRequireEmailVerification()
-  const {
-    data: labelerInfo,
-    error: labelerError,
-    isLoading: isLabelerLoading,
-  } = useLabelerInfoQuery({
-    did: profile.did,
-    enabled: !!profile.associated?.labeler,
-  })
   const [currentPage, setCurrentPage] = React.useState(0)
   const {_} = useLingui()
 
@@ -196,10 +185,8 @@ function ProfileScreenLoaded({
   const mediaSectionRef = React.useRef<SectionRef>(null)
   const videosSectionRef = React.useRef<SectionRef>(null)
   const likesSectionRef = React.useRef<SectionRef>(null)
-  const feedsSectionRef = React.useRef<SectionRef>(null)
   const listsSectionRef = React.useRef<SectionRef>(null)
   const starterPacksSectionRef = React.useRef<SectionRef>(null)
-  const labelsSectionRef = React.useRef<SectionRef>(null)
 
   useSetTitle(combinedDisplayName(profile))
 
@@ -213,15 +200,11 @@ function ProfileScreenLoaded({
   )
 
   const isMe = profile.did === currentAccount?.did
-  const hasLabeler = !!profile.associated?.labeler
-  const showFiltersTab = hasLabeler
   const showPostsTab = true
   const showRepliesTab = hasSession
-  const showMediaTab = !hasLabeler
-  const showVideosTab = !hasLabeler
+  const showMediaTab = true
+  const showVideosTab = true
   const showLikesTab = isMe
-  const feedGenCount = profile.associated?.feedgens || 0
-  const showFeedsTab = isMe || feedGenCount > 0
   const starterPackCount = profile.associated?.starterPacks || 0
   const showStarterPacksTab = isMe || starterPackCount > 0
   // subtract starterpack count from list count, since starterpacks are a type of list
@@ -229,31 +212,24 @@ function ProfileScreenLoaded({
   const showListsTab = hasSession && (isMe || listCount > 0)
 
   const sectionTitles = [
-    showFiltersTab ? _(msg`Labels`) : undefined,
-    showListsTab && hasLabeler ? _(msg`Lists`) : undefined,
     showPostsTab ? _(msg`Posts`) : undefined,
     showRepliesTab ? _(msg`Replies`) : undefined,
     showMediaTab ? _(msg`Media`) : undefined,
     showVideosTab ? _(msg`Videos`) : undefined,
     showLikesTab ? _(msg`Likes`) : undefined,
-    showFeedsTab ? _(msg`Feeds`) : undefined,
     showStarterPacksTab ? _(msg`Starter Packs`) : undefined,
-    showListsTab && !hasLabeler ? _(msg`Lists`) : undefined,
+    showListsTab ? _(msg`Lists`) : undefined,
   ].filter(Boolean) as string[]
 
   let nextIndex = 0
-  let filtersIndex: number | null = null
   let postsIndex: number | null = null
   let repliesIndex: number | null = null
   let mediaIndex: number | null = null
   let videosIndex: number | null = null
   let likesIndex: number | null = null
-  let feedsIndex: number | null = null
   let starterPacksIndex: number | null = null
   let listsIndex: number | null = null
-  if (showFiltersTab) {
-    filtersIndex = nextIndex++
-  }
+
   if (showPostsTab) {
     postsIndex = nextIndex++
   }
@@ -269,9 +245,6 @@ function ProfileScreenLoaded({
   if (showLikesTab) {
     likesIndex = nextIndex++
   }
-  if (showFeedsTab) {
-    feedsIndex = nextIndex++
-  }
   if (showStarterPacksTab) {
     starterPacksIndex = nextIndex++
   }
@@ -281,9 +254,7 @@ function ProfileScreenLoaded({
 
   const scrollSectionToTop = useCallback(
     (index: number) => {
-      if (index === filtersIndex) {
-        labelsSectionRef.current?.scrollToTop()
-      } else if (index === postsIndex) {
+      if (index === postsIndex) {
         postsSectionRef.current?.scrollToTop()
       } else if (index === repliesIndex) {
         repliesSectionRef.current?.scrollToTop()
@@ -293,8 +264,6 @@ function ProfileScreenLoaded({
         videosSectionRef.current?.scrollToTop()
       } else if (index === likesIndex) {
         likesSectionRef.current?.scrollToTop()
-      } else if (index === feedsIndex) {
-        feedsSectionRef.current?.scrollToTop()
       } else if (index === starterPacksIndex) {
         starterPacksSectionRef.current?.scrollToTop()
       } else if (index === listsIndex) {
@@ -302,13 +271,11 @@ function ProfileScreenLoaded({
       }
     },
     [
-      filtersIndex,
       postsIndex,
       repliesIndex,
       mediaIndex,
       videosIndex,
       likesIndex,
-      feedsIndex,
       listsIndex,
       starterPacksIndex,
     ],
@@ -366,7 +333,6 @@ function ProfileScreenLoaded({
       <ExpoScrollForwarderView scrollViewTag={scrollViewTag}>
         <ProfileHeader
           profile={profile}
-          labeler={labelerInfo}
           descriptionRT={hasDescription ? descriptionRT : null}
           moderationOpts={moderationOpts}
           hideBackButton={hideBackButton}
@@ -391,33 +357,6 @@ function ProfileScreenLoaded({
         onCurrentPageSelected={onCurrentPageSelected}
         renderHeader={renderHeader}
         allowHeaderOverScroll>
-        {showFiltersTab
-          ? ({headerHeight, isFocused, scrollElRef}) => (
-              <ProfileLabelsSection
-                ref={labelsSectionRef}
-                labelerInfo={labelerInfo}
-                labelerError={labelerError}
-                isLabelerLoading={isLabelerLoading}
-                moderationOpts={moderationOpts}
-                scrollElRef={scrollElRef as ListRef}
-                headerHeight={headerHeight}
-                isFocused={isFocused}
-                setScrollViewTag={setScrollViewTag}
-              />
-            )
-          : null}
-        {showListsTab && !!profile.associated?.labeler
-          ? ({headerHeight, isFocused, scrollElRef}) => (
-              <ProfileLists
-                ref={listsSectionRef}
-                did={profile.did}
-                scrollElRef={scrollElRef as ListRef}
-                headerOffset={headerHeight}
-                enabled={isFocused}
-                setScrollViewTag={setScrollViewTag}
-              />
-            )
-          : null}
         {showPostsTab
           ? ({headerHeight, isFocused, scrollElRef}) => (
               <ProfileFeedSection
@@ -513,18 +452,6 @@ function ProfileScreenLoaded({
               />
             )
           : null}
-        {showFeedsTab
-          ? ({headerHeight, isFocused, scrollElRef}) => (
-              <ProfileFeedgens
-                ref={feedsSectionRef}
-                did={profile.did}
-                scrollElRef={scrollElRef as ListRef}
-                headerOffset={headerHeight}
-                enabled={isFocused}
-                setScrollViewTag={setScrollViewTag}
-              />
-            )
-          : null}
         {showStarterPacksTab
           ? ({headerHeight, isFocused, scrollElRef}) => (
               <ProfileStarterPacks
@@ -549,7 +476,7 @@ function ProfileScreenLoaded({
               />
             )
           : null}
-        {showListsTab && !profile.associated?.labeler
+        {showListsTab
           ? ({headerHeight, isFocused, scrollElRef}) => (
               <ProfileLists
                 ref={listsSectionRef}

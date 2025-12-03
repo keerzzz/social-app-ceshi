@@ -152,7 +152,6 @@ export function StepInfo({
         <HostingProvider
           minimal
           serviceUrl={state.serviceUrl}
-          onSelectServiceUrl={v => dispatch({type: 'setServiceUrl', value: v})}
         />
         {state.isLoading || isLoadingStarterPack ? (
           <View style={[a.align_center]}>
